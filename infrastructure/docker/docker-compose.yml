@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: eduflow-postgres
+    environment:
+      POSTGRES_DB: eduflow
+      POSTGRES_USER: eduflow_user
+      POSTGRES_PASSWORD: eduflow_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - eduflow-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: eduflow-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - eduflow-network
+
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: eduflow-backend
+    environment:
+      DATABASE_URL: postgresql://eduflow_user:eduflow_password@postgres:5432/eduflow
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: your-super-secret-jwt-key
+      NODE_ENV: development
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./apps/backend:/app
+      - /app/node_modules
+    networks:
+      - eduflow-network
+    command: npm run start:dev
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    container_name: eduflow-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/frontend:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - eduflow-network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  eduflow-network:
+    driver: bridge

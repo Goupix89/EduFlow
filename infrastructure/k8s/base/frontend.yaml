@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eduflow-frontend
+  namespace: eduflow
+  labels:
+    app: eduflow-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: eduflow-frontend
+  template:
+    metadata:
+      labels:
+        app: eduflow-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: your-registry/eduflow-frontend:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: "http://eduflow-backend-service.eduflow.svc.cluster.local:3001/api/v1"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eduflow-frontend-service
+  namespace: eduflow
+spec:
+  selector:
+    app: eduflow-frontend
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: eduflow-ingress
+  namespace: eduflow
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - app.eduflow.com
+    secretName: eduflow-tls
+  rules:
+  - host: app.eduflow.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: eduflow-frontend-service
+            port:
+              number: 3000
+  - host: api.eduflow.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: eduflow-backend-service
+            port:
+              number: 3001

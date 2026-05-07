@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eduflow-config
+  namespace: eduflow
+data:
+  NODE_ENV: "production"
+  PORT: "3001"
+  FRONTEND_URL: "https://app.eduflow.com"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: eduflow-secrets
+  namespace: eduflow
+type: Opaque
+data:
+  DATABASE_URL: <base64-encoded-database-url>
+  REDIS_URL: <base64-encoded-redis-url>
+  JWT_SECRET: <base64-encoded-jwt-secret>
+  OPENAI_API_KEY: <base64-encoded-openai-key>
