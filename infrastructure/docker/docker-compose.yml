@@ -27,7 +27,7 @@ services:
 
   backend:
     build:
-      context: ./apps/backend
+      context: ../../apps/backend
       dockerfile: Dockerfile
     container_name: eduflow-backend
     environment:
@@ -41,7 +41,7 @@ services:
       - postgres
       - redis
     volumes:
-      - ./apps/backend:/app
+      - ../../apps/backend:/app
       - /app/node_modules
     networks:
       - eduflow-network
@@ -49,7 +49,7 @@ services:
 
   frontend:
     build:
-      context: ./apps/frontend
+      context: ../../apps/frontend
       dockerfile: Dockerfile
     container_name: eduflow-frontend
     environment:
@@ -57,7 +57,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./apps/frontend:/app
+      - ../../apps/frontend:/app
       - /app/node_modules
       - /app/.next
     networks:
